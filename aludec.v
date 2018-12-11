@@ -37,15 +37,22 @@ module aludec(
             `ORI   : alucontrol <= `OR_CONTROL;
             `SLTI  : alucontrol <= `SLT_CONTROL;
             `LUI   : alucontrol <= `LUI_CONTROL;
+          
             `R_TYPE: begin
                 case(funct)
-                    `ADD: alucontrol <= `ADD_CONTROL;
-                    `SUB: alucontrol <= `SUB_CONTROL;
-                    `AND: alucontrol <= `AND_CONTROL;
-                    `OR : alucontrol <= `OR_CONTROL;
-                    `XOR: alucontrol <= `XOR_CONTROL;
-                    `NOR: alucontrol <= `NOR_CONTROL;
-                    `SLT: alucontrol <= `SLT_CONTROL;
+                    `ADD   : alucontrol <= `ADD_CONTROL;
+                    `SUB   : alucontrol <= `SUB_CONTROL;
+                    `AND   : alucontrol <= `AND_CONTROL;
+                    `OR    : alucontrol <= `OR_CONTROL;
+                    `XOR   : alucontrol <= `XOR_CONTROL;
+                    `NOR   : alucontrol <= `NOR_CONTROL;
+                    `SLT   : alucontrol <= `SLT_CONTROL;
+                    `SLL   : alucontrol <= `SLL_CONTROL;
+                    `SRL   : alucontrol <= `SRL_CONTROL;
+                    `SLLV  : alucontrol <= `SLLV_CONTROL;
+                    `SRLV  : alucontrol <= `SRLV_CONTROL;
+                    `SRA   : alucontrol <= `SRA_CONTROL;
+                    `SRAV  : alucontrol <= `SRAV_CONTROL;
                     default  : begin end
                 endcase
             end

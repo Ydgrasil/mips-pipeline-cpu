@@ -57,8 +57,6 @@ module maindec(
             `LUI:    control <= 7'b1010000;
             `SLTI:   control <= 7'b1010000;
             
-
-            
             `J:      control <= 7'b0000001;
             default: control <= 7'b0000000;
         endcase
