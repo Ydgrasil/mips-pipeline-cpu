@@ -53,6 +53,10 @@ module aludec(
                     `SRLV  : alucontrol <= `SRLV_CONTROL;
                     `SRA   : alucontrol <= `SRA_CONTROL;
                     `SRAV  : alucontrol <= `SRAV_CONTROL;
+                    `MFHI  : alucontrol <= `MFHI_CONTROL;
+                    `MTHI  : alucontrol <= `MTHI_CONTROL;
+                    `MFLO  : alucontrol <= `MFLO_CONTROL;
+                    `MTLO  : alucontrol <= `MTLO_CONTROL;
                     default  : begin end
                 endcase
             end

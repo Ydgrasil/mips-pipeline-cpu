@@ -20,10 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module mux2
-#(
-    parameter WIDTH = 32
-)
+module mux2#(parameter WIDTH = 32)
 (
     
     input wire[WIDTH-1:0] a,

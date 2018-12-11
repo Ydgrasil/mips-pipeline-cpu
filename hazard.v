@@ -23,9 +23,11 @@
 module hazard(
     input wire[4:0] rsD,rtD,rsE,rtE,writeregE,writeregM,writeregW,
     input wire branchD,regwriteE,memtoregE,regwriteM,memtoregM,regwriteW,
+    input wire [1:0]hilo_weM,hilo_weW,hilo_weE,
     output wire stallF,stallD,flushE,
     output reg [1:0]forwardaE,forwardbE,
-    output wire forwardaD,forwardbD
+    output wire forwardaD,forwardbD,
+    output wire [1:0]forwardhiloE
     );
     wire lwstall,branchstall;
     always@(*)begin
@@ -47,7 +49,9 @@ module hazard(
     
     assign forwardaD = ((rsD != 0) && (rsD == writeregM) && regwriteM);
     assign forwardbD = ((rtD != 0) && (rtD == writeregM) && regwriteM);
- 
+    assign forwardhiloE =   (hilo_weE==2'b00 & (hilo_weM==2'b10 | hilo_weM==2'b01 | hilo_weM==2'b11))?2'b01:
+                            (hilo_weE==2'b00 & (hilo_weW==2'b10 | hilo_weW==2'b01 | hilo_weW==2'b11))?2'b10:
+                            2'b00;
     
     assign branchstall = (branchD && regwriteE && (writeregE == rsD || writeregE == rtD)) || (branchD && memtoregM && (writeregM == rsD || writeregM == rtD));
                           

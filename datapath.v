@@ -31,6 +31,7 @@ module datapath(
 	input wire jumpD,
 	output wire equalD,
 	output wire[5:0] opD,functD,
+	input wire [1:0] hilo_weD,
 	//execute stage
 	input wire memtoregE,
 	input wire alusrcE,regdstE,
@@ -44,7 +45,8 @@ module datapath(
 	input wire[31:0] readdataM,
 	//writeback stage
 	input wire memtoregW,
-	input wire regwriteW
+	input wire regwriteW,
+	output wire [31:0]instrD
     );
 	
 	//fetch stage
@@ -52,7 +54,7 @@ module datapath(
 	//FD
 	wire [31:0] pcnextFD,pcnextbrFD,pcplus4F,pcbranchD;
 	//decode stage
-	wire [31:0] pcplus4D,instrD;
+	wire [31:0] pcplus4D;
 	wire forwardaD,forwardbD;
 	wire [4:0] rsD,rtD,rdD;
 	wire flushD,stallD; 
@@ -60,6 +62,7 @@ module datapath(
 	wire [31:0] srcaD,srca2D,srcbD,srcb2D;
 	//execute stage
 	wire [1:0] forwardaE,forwardbE;
+	wire [1:0] forwardhiloE;
 	wire [4:0] rsE,rtE,rdE;
 	wire [4:0] writeregE;
 	wire [31:0] signimmE;
@@ -71,6 +74,10 @@ module datapath(
 	wire [4:0] writeregW;
 	wire [31:0] aluoutW,readdataW,resultW;
 	wire [4:0] saD,saE;
+	wire [1:0]hilo_weW,hilo_weM,hilo_weE;
+	wire [31:0]hi_alu_outM,hi_alu_outW,hi_alu_outE,hiE,hi2E;
+	wire [31:0]lo_alu_outM,lo_alu_outW,lo_alu_outE,loE,lo2E;
+
 	//hazard detection
 	hazard h(
 		//fetch stage
@@ -93,7 +100,12 @@ module datapath(
 		.memtoregM(memtoregM),
 		//write back stage
 		.writeregW(writeregW),
-		.regwriteW(regwriteW)
+		.regwriteW(regwriteW),
+		//hilo 
+		.hilo_weM(hilo_weM),
+		.hilo_weE(hilo_weE),
+		.hilo_weW(hilo_weW),
+		.forwardhiloE(forwardhiloE)
 		);
 
 	//next PC logic (operates in fetch an decode)
@@ -116,7 +128,7 @@ module datapath(
 	adder pcadd2(pcplus4D,signimmshD,pcbranchD);
 	mux2 #(32) forwardamux(srcaD,aluoutM,forwardaD,srca2D);
 	mux2 #(32) forwardbmux(srcbD,aluoutM,forwardbD,srcb2D);
-	eqcmp comp(srca2D,srcb2D,op,rtD,equalD);
+	eqcmp comp(srca2D,srcb2D,opD,rtD,equalD);
 
 	assign opD = instrD[31:26];
 	assign functD = instrD[5:0];
@@ -131,22 +143,37 @@ module datapath(
 	floprc #(5) r4E(clk,rst,flushE,rsD,rsE);
 	floprc #(5) r5E(clk,rst,flushE,rtD,rtE);
 	floprc #(5) r6E(clk,rst,flushE,rdD,rdE);
-	floprc #(5) r7e(clk,rst,flushE,saD,saE);
+	floprc #(5) r7E(clk,rst,flushE,saD,saE);
+	floprc #(2) r8E(clk,rst,flushE,hilo_weD,hilo_weE);
 
 	mux3 #(32) forwardaemux(srcaE,resultW,aluoutM,forwardaE,srca2E);
 	mux3 #(32) forwardbemux(srcbE,resultW,aluoutM,forwardbE,srcb2E);
+	//hiE hiE,hi_alu_outM hilo_oM[63:32],hi_alu_outW hilo_oW[63:32];
+	mux3 #(32) forwardhimux(hiE,hi_alu_outM,hi_alu_outW,forwardhiloE,hi2E);
+	mux3 #(32) forwardlomux(loE,lo_alu_outM,lo_alu_outW,forwardhiloE,lo2E);
+
 	mux2 #(32) srcbmux(srcb2E,signimmE,alusrcE,srcb3E);
-	alu alu(.a(srca2E),.b(srcb3E),.op(alucontrolE),.sa(saE),.res(aluoutE));
+
+	alu alu(.a(srca2E),.b(srcb3E),.op(alucontrolE),.sa(saE),.hilo_we(hilo_weE),.hi(hi2E),
+		.lo(lo2E),.res(aluoutE),.hi_alu_out(hi_alu_outE),.lo_alu_out(lo_alu_outE));
 	mux2 #(5) wrmux(rtE,rdE,regdstE,writeregE);
 
 	//mem stage
 	flopr #(32) r1M(clk,rst,srcb2E,writedataM);
 	flopr #(32) r2M(clk,rst,aluoutE,aluoutM);
 	flopr #(5) r3M(clk,rst,writeregE,writeregM);
-
+	flopr #(32) r4M(clk,rst,hi_alu_outE,hi_alu_outM);
+	flopr #(32) r5M(clk,rst,lo_alu_outE,lo_alu_outM);
+	flopr #(2) r6M(clk,rst,hilo_weE,hilo_weM);
 	//writeback stage
 	flopr #(32) r1W(clk,rst,aluoutM,aluoutW);
 	flopr #(32) r2W(clk,rst,readdataM,readdataW);
 	flopr #(5) r3W(clk,rst,writeregM,writeregW);
+	flopr #(2) r4W(clk,rst,hilo_weM,hilo_weW);
+
+	flopr #(32) r5W(clk,rst,hi_alu_outM,hi_alu_outW);
+	flopr #(32) r6W(clk,rst,lo_alu_outM,lo_alu_outW);
 	mux2 #(32) resmux(aluoutW,readdataW,memtoregW,resultW);
+	hilo_reg hilo(clk,rst,hilo_weW,hi_alu_outW[31:0],lo_alu_outW[31:0],hiE[31:0],loE[31:0]);
+
 endmodule
