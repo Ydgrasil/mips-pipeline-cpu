@@ -98,7 +98,7 @@ module datapath(
 		.stallF(stallF),
 		//decode stage
 		.rsD(rsD),.rtD(rtD),
-		.branchD(branchD),
+		.branchD(branchD),.balD(balD),.jumpD(jumpD),
 		.forwardaD(forwardaD),.forwardbD(forwardbD),
 		.stallD(stallD),
 		//execute stage
@@ -139,6 +139,8 @@ module datapath(
 	flopenr #(32) pcreg(clk,rst,~stallF,pcnextFD,pcF);
 	adder pcadd1(pcF,32'b100,pcplus4F);
 	//decode stage
+	wire [39:0] ascii;
+	instdec instdec(instrD,ascii);
 	flopenr #(32) r1D(clk,rst,~stallD,pcplus4F,pcplus4D);
 	flopenrc #(32) r2D(clk,rst,~stallD,flushD,instrF,instrD);
 	signext se(instrD[15:0],instrD[29:28],signimmD);

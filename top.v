@@ -27,8 +27,10 @@ module top(
     );
 
 	wire[31:0] pc,instr,readdata;
+	
     wire memen;
 	mips mips(clk,rst,pc,instr,memwrite,dataadr,writedata,readdata,memen);
+	
 	blk_mem_gen_0 imem(.clka(~clk),.addra(pc[9:2]),.douta(instr));
 	blk_mem_gen_1 dmem(.clka(~clk),.ena(memen),.wea({3'b0,memwrite}),.addra(dataadr),.dina(writedata),.douta(readdata));
 endmodule
