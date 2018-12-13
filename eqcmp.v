@@ -32,10 +32,11 @@ module eqcmp(
                (op == `BNE)  ? (a != b):
                (op == `BGTZ) ? ((a[31] == 1'b0) && (a != `ZeroWord)):
                (op == `BLEZ) ? ((a[31] == 1'b1) || (a == `ZeroWord)):
-               (op == `BLTZ) ? (a[32] == 1'b1):
-               (op == `BGEZ) ? ((a[31] == 1'b0) || (a != `ZeroWord)):
+               (op == `BLTZ || op == `BLTZAL) ? (a[31] == 1'b1):  
+               (op == `BGEZ || op == `BGEZAL) ? ((a[31] == 1'b0) || (a == `ZeroWord)):
                1'b0;
-               ////BLTZAL BFEZAL 
+               ////BLTZAL  rs的值小于 0则转移
+               /// BGEZAL rs的值大于等于 0则转移 
 
 
 endmodule
