@@ -43,9 +43,10 @@ module datapath(
 	//mem stage
 	input wire memtoregM,
 	input wire regwriteM,
-	output wire[31:0] aluoutM,writedataM,
+	output wire[31:0] aluoutM,writedata2M,
 	input wire[31:0] readdataM,
 	input wire memen,
+	output [3:0]sel,
 	//writeback stage
 	input wire memtoregW,
 	input wire regwriteW,
@@ -75,8 +76,11 @@ module datapath(
 	wire div_mux_signal;
 	wire [31:0] hi_div_outE,lo_div_outE;
 	wire [31:0] hi_mux_outE,lo_mux_outE;
+	wire [5:0] opE;
 	//mem stage
 	wire [4:0] writeregM;
+	wire [31:0] writedataM;
+	wire [5:0] opM;
 	//writeback stage
 	wire [4:0] writeregW;
 	wire [31:0] aluoutW,readdataW,resultW;
@@ -91,6 +95,8 @@ module datapath(
 	wire jalE,balE,jrE;
 	wire [4:0]writereg2E;
 	wire [31:0]pcplus8E,aluout2E;
+	wire rs_tmp;
+	wire [4:0]writereg3E;
 ///jalend
 	//hazard detec tion
 	hazard h(
@@ -168,6 +174,7 @@ module datapath(
 	//jal,bal
 	flopenrc #(3) r9E(clk,rst,~stallE,flushE,{jalD,jrD,balD},{jalE,jrE,balE});
 	flopenrc #(32) r10E(clk,rst,~stallE,flushE,pcplus4D+4,pcplus8E); 
+	flopenrc #(6) r11E(clk,rst,~stallE,flushE,opD,opE);
 
 	mux3 #(32) forwardaemux(srcaE,resultW,aluoutM,forwardaE,srca2E); //normal forward
 	mux3 #(32) forwardbemux(srcbE,resultW,aluoutM,forwardbE,srcb2E);
@@ -190,8 +197,6 @@ module datapath(
 	mux2 #(5) wrmux(rtE,rdE,regdstE,writeregE);
 
 	//jal,bal
-	wire rs_tmp;
-	wire [4:0]writereg3E;
 	assign rs_tmp=(writereg2E==5'b00000)?1'b1:1'b0;
 	mux2 #(5) wrmux2(writeregE,5'b11111,jalE|balE,writereg2E);
 	mux2 #(5) wrmux4(writereg2E,5'b11111, jrE&regdstE&rs_tmp,writereg3E);
@@ -201,14 +206,20 @@ module datapath(
 	//mem stage
 	flopr #(32) r1M(clk,rst,srcb2E,writedataM);
 	flopr #(32) r2M(clk,rst,aluout2E,aluoutM);
-	flopr #(5) r3M(clk,rst,writereg3E,writeregM);
+	flopr #(5) r3M(clk,rst,writereg3E,writeregM);	
 	flopr #(32) r4M(clk,rst,hi_mux_outE,hi_alu_outM);
 	flopr #(32) r5M(clk,rst,lo_mux_outE,lo_alu_outM);
 	flopr #(2) r6M(clk,rst,hilo_weE,hilo_weM);
+	flopr #(6) r7M(clk,rst, opE,opM);
+	//lw,sw
+	wire[31:0] readdata2M;
+	wire[1:0] size;
+	mem_sel mem_sel(.writedata(writedataM),.addr(aluoutM),.op(opM),.readdata(readdataM),
+		            .writedata2(writedata2M),.finaldata(readdata2M),.sel(sel),.size(size));
 
 	//writeback stage
 	flopr #(32) r1W(clk,rst,aluoutM,aluoutW);
-	flopr #(32) r2W(clk,rst,readdataM,readdataW);
+	flopr #(32) r2W(clk,rst,readdata2M,readdataW);
 	flopr #(5) r3W(clk,rst,writeregM,writeregW);
 	flopr #(2) r4W(clk,rst,hilo_weM,hilo_weW);
 	flopr #(32) r5W(clk,rst,hi_alu_outM,hi_alu_outW);

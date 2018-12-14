@@ -39,6 +39,7 @@ module controller(
 	//mem stage
 	output wire memtoregM,memwriteM,
 				regwriteM,memenD,
+	//output wire [3:0] sel,
 	//write back stage
 	output wire memtoregW,regwriteW,
 	output wire[1:0] hilo_we

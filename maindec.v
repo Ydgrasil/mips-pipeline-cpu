@@ -65,7 +65,14 @@ module maindec(
             
             
             `LW:     {control,hilo_we} <= 13'b1010_1100_0000_0;
+            `LB:	 {control,hilo_we} <= 13'b1010_1100_0000_0;
+            `LBU: 	 {control,hilo_we} <= 13'b1010_1100_0000_0;
+            `LH: 	 {control,hilo_we} <= 13'b1010_1100_0000_0;
+            `LHU:    {control,hilo_we} <= 13'b1010_1100_0000_0;
+
             `SW:     {control,hilo_we} <= 13'b0010_1000_0010_0; 
+            `SB: 	 {control,hilo_we} <= 13'b0010_1000_0010_0;
+            `SH:     {control,hilo_we} <= 13'b0010_1000_0010_0;
             
             `BEQ:    {control,hilo_we} <= 13'b0001_0000_0000_0;
             `BNE:    {control,hilo_we} <= 13'b0001_0000_0000_0;
