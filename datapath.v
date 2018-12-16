@@ -24,33 +24,36 @@
 module datapath(
 	input wire clk,rst,
 	//fetch stage
-	output wire[31:0] pcF,
-	input wire[31:0] instrF,
+	output wire [31:0] pcF,
+	input wire  [31:0] instrF,
 	//decode stage
-	input wire pcsrcD,branchD,
-	input wire jumpD,jalD,jrD,balD,
+	input wire  pcsrcD,branchD,
+	input wire  jumpD,jalD,jrD,balD,
 	output wire equalD,
-	output wire[5:0] opD,functD,
-	input wire [1:0]hilo_weD,
+	output wire [5:0] opD,functD,
+	input wire  [1:0]hilo_weD,
 	//execute stage
-	input wire memtoregE,
-	input wire alusrcE,regdstE,
-	input wire regwriteE,
-	input wire[4:0] alucontrolE,
+	input wire  memtoregE,
+	input wire  alusrcE,regdstE,
+	input wire  regwriteE,
+	input wire  [4:0] alucontrolE,
 	output wire flushE,
 	output wire stallE,
 	output wire overflow, //-------------------------new signal
 	//mem stage
-	input wire memtoregM,
-	input wire regwriteM,
-	output wire[31:0] aluoutM,writedata2M,
-	input wire[31:0] readdataM,
-	input wire memen,
-	output [3:0]sel,
+	input wire  memtoregM,
+	input wire  regwriteM,
+	output wire [31:0] aluoutM,writedata2M,
+	input wire  [31:0] readdataM,
+	input wire  memen,
+	output wire [3:0]sel,
 	//writeback stage
-	input wire memtoregW,
-	input wire regwriteW,
-	output wire[31:0] instrD
+	input wire  memtoregW,
+	input wire  regwriteW,
+	output wire [31:0] instrD,
+	output wire [31:0] pcW,
+	output wire [4:0] writeregW,
+	output wire [31:0]aluoutW
     );
 	
 	//fetch stage
@@ -64,6 +67,7 @@ module datapath(
 	wire flushD,stallD; 
 	wire [31:0] signimmD,signimmshD;
 	wire [31:0] srcaD,srca2D,srcbD,srcb2D;
+	wire [31:0] pcD;
 	//execute stage
 	wire [1:0] forwardaE,forwardbE;
 	wire [1:0] forwardhiloE;
@@ -77,15 +81,16 @@ module datapath(
 	wire [31:0] hi_div_outE,lo_div_outE;
 	wire [31:0] hi_mux_outE,lo_mux_outE;
 	wire [5:0] opE;
+	wire [31:0] pcE;
 	//mem stage
-	wire [4:0] writeregM;
+	wire [4:0]  writeregM;
 	wire [31:0] writedataM;
-	wire [5:0] opM;
+	wire [5:0]  opM;
+	wire [31:0] pcM;
 	//writeback stage
-	wire [4:0] writeregW;
-	wire [31:0] aluoutW,readdataW,resultW;
+	//wire [4:0] writeregWaluoutW,;
+	wire [31:0] readdataW,resultW;
 	wire [4:0] saD,saE;
-
 ////hilo
 	wire [1:0]hilo_weW,hilo_weM,hilo_weE;
 	wire [31:0]hi_alu_outM,hi_alu_outW,hi_alu_outE,hiE,hi2E;
@@ -142,13 +147,16 @@ module datapath(
 	regfile rf(.clk(~clk),.we3(regwriteW),.ra1(rsD),.ra2(rtD),.wa3(writeregW),.wd3(resultW),.rd1(srcaD),.rd2(srcbD));///
 
 	//fetch stage logic
-	flopenr #(32) pcreg(clk,rst,~stallF,pcnextFD,pcF);
+	//flopenr #(32) pcreg(clk,rst,~stallF,pcnextFD,pcF);
+	pc #(32) pcreg(clk,rst,~stallF,pcnextFD,pcF);
 	adder pcadd1(pcF,32'b100,pcplus4F);
 	//decode stage
 	wire [39:0] ascii;
 	instdec instdec(instrD,ascii);
-	flopenr #(32) r1D(clk,rst,~stallD,pcplus4F,pcplus4D);
+	flopenr  #(32) r1D(clk,rst,~stallD,pcplus4F,pcplus4D);
 	flopenrc #(32) r2D(clk,rst,~stallD,flushD,instrF,instrD);
+	flopenrc #(32) r3D(clk,rst,~stallD,flushD,pcF,pcD);
+
 	signext se(instrD[15:0],instrD[29:28],signimmD);
 	sl2 immsh(signimmD,signimmshD);
 	adder pcadd2(pcplus4D,signimmshD,pcbranchD);
@@ -175,7 +183,7 @@ module datapath(
 	flopenrc #(3) r9E(clk,rst,~stallE,flushE,{jalD,jrD,balD},{jalE,jrE,balE});
 	flopenrc #(32) r10E(clk,rst,~stallE,flushE,pcplus4D+4,pcplus8E); 
 	flopenrc #(6) r11E(clk,rst,~stallE,flushE,opD,opE);
-
+	flopenrc #(32) r12E(clk,rst,~stallE,flushE,pcD,pcE);
 	mux3 #(32) forwardaemux(srcaE,resultW,aluoutM,forwardaE,srca2E); //normal forward
 	mux3 #(32) forwardbemux(srcbE,resultW,aluoutM,forwardbE,srcb2E);
 	
@@ -206,25 +214,27 @@ module datapath(
 	//mem stage
 	flopr #(32) r1M(clk,rst,srcb2E,writedataM);
 	flopr #(32) r2M(clk,rst,aluout2E,aluoutM);
-	flopr #(5) r3M(clk,rst,writereg3E,writeregM);	
+	flopr #(5)  r3M(clk,rst,writereg3E,writeregM);	
 	flopr #(32) r4M(clk,rst,hi_mux_outE,hi_alu_outM);
 	flopr #(32) r5M(clk,rst,lo_mux_outE,lo_alu_outM);
-	flopr #(2) r6M(clk,rst,hilo_weE,hilo_weM);
-	flopr #(6) r7M(clk,rst, opE,opM);
+	flopr #(2)  r6M(clk,rst,hilo_weE,hilo_weM);
+	flopr #(6)  r7M(clk,rst, opE,opM);
+	flopr #(32) r8M(clk,rst,pcE,pcM);
 	//lw,sw
 	wire[31:0] readdata2M;
 	wire[1:0] size;
 	mem_sel mem_sel(.writedata(writedataM),.addr(aluoutM),.op(opM),.readdata(readdataM),
 		            .writedata2(writedata2M),.finaldata(readdata2M),.sel(sel),.size(size));
-
+  
 	//writeback stage
 	flopr #(32) r1W(clk,rst,aluoutM,aluoutW);
 	flopr #(32) r2W(clk,rst,readdata2M,readdataW);
-	flopr #(5) r3W(clk,rst,writeregM,writeregW);
-	flopr #(2) r4W(clk,rst,hilo_weM,hilo_weW);
+	flopr #(5)  r3W(clk,rst,writeregM,writeregW);
+	flopr #(2)  r4W(clk,rst,hilo_weM,hilo_weW);
 	flopr #(32) r5W(clk,rst,hi_alu_outM,hi_alu_outW);
 	flopr #(32) r6W(clk,rst,lo_alu_outM,lo_alu_outW);
-	mux2 #(32) resmux(aluoutW,readdataW,memtoregW,resultW);
+	flopr #(32) r7w(clk,rst,pcM,pcW);
+	mux2 #(32)  resmux(aluoutW,readdataW,memtoregW,resultW);
 	//hilo_reg
 	hilo_reg hilo(clk,rst,hilo_weW,hi_alu_outW[31:0],lo_alu_outW[31:0],hiE[31:0],loE[31:0]);
 
