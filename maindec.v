@@ -45,20 +45,19 @@ module maindec(
     always@(*) begin
         case(op)
             `R_TYPE: begin
-
-               // control <= 11'b1100_0000_000;
                 case(funct)
-                    `MTHI : {control,hilo_we} <=13'b1100_0000_0001_0;
-                    `MTLO : {control,hilo_we} <=13'b1100_0000_0000_1;
-                    `MFHI : {control,hilo_we} <=13'b1100_0000_0000_0;
-                    `MFLO : {control,hilo_we} <=13'b1100_0000_0000_0;
-                    `MULT : {control,hilo_we} <=13'b1100_0000_0001_1;
-                    `MULTU: {control,hilo_we} <=13'b1100_0000_0001_1;
-                    `DIV  : {control,hilo_we} <=13'b1100_0000_0001_1;
-                    `DIVU : {control,hilo_we} <=13'b1100_0000_0001_1;
+                    `MTHI : {control,hilo_we} <= 13'b1100_0000_0001_0;
+                    `MTLO : {control,hilo_we} <= 13'b1100_0000_0000_1;
+                    `MFHI : {control,hilo_we} <= 13'b1100_0000_0000_0;
+                    `MFLO : {control,hilo_we} <= 13'b1100_0000_0000_0;
+                    `MULT : {control,hilo_we} <= 13'b1100_0000_0001_1;
+                    `MULTU: {control,hilo_we} <= 13'b1100_0000_0001_1;
+                    `DIV  : {control,hilo_we} <= 13'b1100_0000_0001_1;
+                    `DIVU : {control,hilo_we} <= 13'b1100_0000_0001_1;
                     `JALR:  {control,hilo_we} <= 13'b1100_0000_1000_0;
                     `JR:    {control,hilo_we} <= 13'b0000_0010_1000_0;
-                    default: {control,hilo_we} <= 13'b1100_0000_0000_0;
+                    
+                   default: {control,hilo_we} <= 13'b1100_0000_0000_0;
                 endcase
 
             end 

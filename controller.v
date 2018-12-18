@@ -28,7 +28,7 @@ module controller(
 	output wire pcsrcD,branchD,
 	input wire equalD,
 	output wire jumpD,jalD,jrD,balD,//jump
-	
+	output wire memenD,
 	//execute stage
 	input wire flushE,stallE,
 	input wire overflow,///////-----------------new signal
@@ -38,7 +38,7 @@ module controller(
 
 	//mem stage
 	output wire memtoregM,memwriteM,
-				regwriteM,memenD,
+				regwriteM,memenM,
 	//output wire [3:0] sel,
 	//write back stage
 	output wire memtoregW,regwriteW,
@@ -49,13 +49,14 @@ module controller(
 	//decode stage
 	wire memtoregD,memwriteD,alusrcD,
 		regdstD,regwriteD;
-	wire memenD,jalD,jrD,balD;
+	wire jalD,jrD,balD;
 	wire[4:0] alucontrolD;
 	wire[5:0]opD,functD;
 	assign opD=instrD[31:26];
 	assign functD=instrD[5:0];
 	//execute stage
 	wire memwriteE;
+	wire memenE;
 //regwrite,regdst,alusrc,bracn,memen,memtoreg,jump,jal,jr,bal,memwrite;
 	maindec md(
 		.instr(instrD),
@@ -67,18 +68,18 @@ module controller(
 
 	assign pcsrcD = branchD & equalD;
 	//pipeline registers
-	flopenrc #(10) regE(
+	flopenrc #(11) regE(
 		clk,
 		rst,
 		~stallE,
 		flushE,
-		{memtoregD,memwriteD,alusrcD,regdstD,regwriteD,alucontrolD},
-		{memtoregE,memwriteE,alusrcE,regdstE,regwriteE,alucontrolE}
+		{memtoregD,memwriteD,alusrcD,regdstD,regwriteD,memenD,alucontrolD},
+		{memtoregE,memwriteE,alusrcE,regdstE,regwriteE,memenE,alucontrolE}
 		);
-	flopr #(3) regM(
+	flopr #(4) regM(
 		clk,rst,
-		{memtoregE,memwriteE,regwriteE & (~overflow)},//overflow cause error
-		{memtoregM,memwriteM,regwriteM}
+		{memtoregE,memwriteE,regwriteE & (~overflow),memenE},//overflow cause error
+		{memtoregM,memwriteM,regwriteM,memenM}
 		);
 	flopr #(2) regW(
 		clk,rst,

@@ -58,10 +58,10 @@ module mycpu(
 	 wire memwriteM;
 	 wire[31:0] aluoutM,writedataM;
 	 wire[31:0] readdataM;
-	 wire memen;
+	 wire memen,memenM;
 	 wire [4:0] writeregW;
 	 wire [3:0] sel;
-	 wire [31:0] aluoutW;
+	 wire [31:0] resultW;
 	 
 	 assign rst = resetn;
 	 //
@@ -72,16 +72,16 @@ module mycpu(
 	 assign instrF = inst_sram_rdata;
 
 	 //
-	 assign data_sram_en = memen;
+	 assign data_sram_en = memenM;
 	 assign data_sram_wen = sel;
 	 assign data_sram_addr = aluoutM;
 	 assign data_sram_wdata = writedataM;
 	 assign readdataM = data_sram_rdata;
 
 	 assign debug_wb_pc = pcW;// to do pcW
-	 assign debug_wb_rf = {4{regwriteW}};
+	 assign debug_wb_rf_wen = {4{regwriteW}};
 	 assign debug_wb_rf_wnum = writeregW;
-	 assign debug_wb_rf_wdata = aluoutW;
+	 assign debug_wb_rf_wdata = resultW;
 
 //
 
@@ -100,7 +100,7 @@ module mycpu(
 		//decode stage
 		.instrD(instrD),
 		.pcsrcD(pcsrcD),.branchD(branchD),.equalD(equalD),.jumpD(jumpD),.jalD(jalD),.jrD(jrD),.balD(balD),
-		
+		.memenD(memen),
 		//execute stage
 		.flushE(flushE),
 		.stallE(stallE),
@@ -111,7 +111,7 @@ module mycpu(
 		
 		//mem stage
 		.memtoregM(memtoregM),.memwriteM(memwriteM),
-		.regwriteM(regwriteM),.memenD(memen),//.sel(sel),
+		.regwriteM(regwriteM),.memenM(memenM),
 		//write back stage
 		.memtoregW(memtoregW),.regwriteW(regwriteW),
 		.hilo_we(hilo_weD)
@@ -148,7 +148,7 @@ module mycpu(
 		.instrD(instrD),
 		.pcW(pcW),
 		.writeregW(writeregW),
-		.aluoutW(aluoutW)
+		.resultW(resultW)
 		
 	    );
 	

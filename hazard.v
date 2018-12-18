@@ -23,7 +23,7 @@
 
 module hazard(
     input wire[4:0] rsD,rtD,rsE,rtE,writeregE,writeregM,writeregW,
-    input wire branchD,regwriteE,memtoregE,regwriteM,memtoregM,regwriteW,balD,jumpD,
+    input wire branchD,regwriteE,memtoregE,regwriteM,memtoregM,regwriteW,balD,jumpD,jrD,
     input wire [1:0]hilo_weM,hilo_weW,hilo_weE,
     input wire [4:0]alucontrolE,
     input wire div_ready,
@@ -58,7 +58,7 @@ module hazard(
                             (hilo_weE==2'b00 & (hilo_weW==2'b10 | hilo_weW==2'b01 | hilo_weW==2'b11))?2'b10:
                             2'b00;
     
-    assign branchstall = (branchD && regwriteE && (writeregE == rsD || writeregE == rtD)) || (branchD && memtoregM && (writeregM == rsD || writeregM == rtD));
+    assign branchstall = ((branchD | jrD | balD )&& regwriteE && (writeregE == rsD || writeregE == rtD)) || (branchD && memtoregM && (writeregM == rsD || writeregM == rtD));
     //div stall
     assign div_start = ((alucontrolE == `DIV_CONTROL) & (div_ready == `DivResultNotReady))  ? 1'b1 : 
                        ((alucontrolE == `DIVU_CONTROL) & (div_ready == `DivResultNotReady)) ? 1'b1 :
