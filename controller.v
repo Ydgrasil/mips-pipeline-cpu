@@ -66,7 +66,7 @@ module controller(
 	aludec ad(.op(opD),.funct(functD),.alucontrol(alucontrolD));
 
 
-	assign pcsrcD = branchD & equalD;
+	assign pcsrcD = (branchD | balD) & equalD;
 	//pipeline registers
 	flopenrc #(11) regE(
 		clk,

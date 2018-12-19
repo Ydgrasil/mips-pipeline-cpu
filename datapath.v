@@ -62,7 +62,7 @@ module datapath(
 	wire [31:0] pcnextFD,pcnextbrFD,pcplus4F,pcbranchD;
 	//decode stage
 	wire [31:0] pcplus4D;
-	wire forwardaD,forwardbD;
+	wire [1:0] forwardaD,forwardbD;
 	wire [4:0] rsD,rtD,rdD;
 	wire flushD,stallD; 
 	wire [31:0] signimmD,signimmshD;
@@ -118,7 +118,7 @@ module datapath(
 		.stallD(stallD),
 		//execute stage
 		.rsE(rsE),.rtE(rtE),
-		.writeregE(writeregE),
+		.writereg2E(writereg2E),
 		.regwriteE(regwriteE),
 		.memtoregE(memtoregE),
 		.forwardaE(forwardaE),.forwardbE(forwardbE),
@@ -168,8 +168,8 @@ module datapath(
 	signext se(instrD[15:0],instrD[29:28],signimmD);
 	sl2 immsh(signimmD,signimmshD);
 	adder pcadd2(pcplus4D,signimmshD,pcbranchD);
-	mux2 #(32) forwardamux(srcaD,aluoutM,forwardaD,srca2D);
-	mux2 #(32) forwardbmux(srcbD,aluoutM,forwardbD,srcb2D);
+	mux4 #(32) forwardamux(srcaD,aluout2E,resultM,resultW,forwardaD,srca2D);
+	mux4 #(32) forwardbmux(srcbD,aluout2E,resultM,resultW,forwardbD,srcb2D);
 	eqcmp comp(srca2D,srcb2D,opD,rtD,equalD);
 
 	assign opD = instrD[31:26];
@@ -233,7 +233,7 @@ module datapath(
 	wire[1:0] size;
 	mem_sel mem_sel(.writedata(writedataM),.addr(aluoutM),.op(opM),.readdata(readdataM),
 		            .writedata2(writedata2M),.finaldata(readdata2M),.sel(sel),.size(size));
-  	mux2 #(32)  resmux(aluoutM,readdataM,memtoregM,resultM);
+  	mux2 #(32)  resmux(aluoutM,readdata2M,memtoregM,resultM);
 	//writeback stage
 	// flopr #(32) r1W(clk,rst,aluoutM,aluoutW);
 	// flopr #(32) r2W(clk,rst,readdata2M,readdataW);

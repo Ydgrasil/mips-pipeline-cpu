@@ -22,18 +22,18 @@
 
 
 module hazard(
-    input wire[4:0] rsD,rtD,rsE,rtE,writeregE,writeregM,writeregW,
+    input wire[4:0] rsD,rtD,rsE,rtE,writereg2E,writeregM,writeregW,
     input wire branchD,regwriteE,memtoregE,regwriteM,memtoregM,regwriteW,balD,jumpD,jrD,
     input wire [1:0]hilo_weM,hilo_weW,hilo_weE,
     input wire [4:0]alucontrolE,
     input wire div_ready,
     output wire div_start,
     output wire stallF,stallD,stallE,flushE,
-    output reg [1:0]forwardaE,forwardbE,
-    output wire forwardaD,forwardbD,
+    output reg  [1:0]forwardaE,forwardbE,
+    output wire [1:0]forwardaD,forwardbD,
     output wire [1:0]forwardhiloE
     );
-    wire lwstall,branchstall;
+    wire lwstall;
     always@(*)begin
         if((rsE != 0) && (rsE == writeregM) && regwriteM)
             forwardaE <= 2'b10;
@@ -51,14 +51,21 @@ module hazard(
     
     assign lwstall = ((rsD == rtE) || (rtD == rtE)) && memtoregE;
     //normal forward
-    assign forwardaD = ((rsD != 0) && (rsD == writeregM) && regwriteM);
-    assign forwardbD = ((rtD != 0) && (rtD == writeregM) && regwriteM);
+    //assign forwardaD = ((rsD != 0) && (rsD == writeregM) && regwriteM);
+    assign forwardaD = (rsD == 0) ? 2'b00:
+                       (rsD == writereg2E & regwriteE) ? 2'b01:
+                       (rsD == writeregM & regwriteM) ? 2'b10:
+                       (rsD == writeregW & regwriteW) ?2'b11: 2'b00;
+    assign forwardbD = (rtD == 0) ? 2'b00:
+                       (rtD == writereg2E & regwriteE) ? 2'b01:
+                       (rtD == writeregM & regwriteM) ? 2'b10:
+                       (rtD == writeregW & regwriteW) ?2'b11: 2'b00;
     //hilp forward
     assign forwardhiloE =   (hilo_weE==2'b00 & (hilo_weM==2'b10 | hilo_weM==2'b01 | hilo_weM==2'b11))?2'b01:
                             (hilo_weE==2'b00 & (hilo_weW==2'b10 | hilo_weW==2'b01 | hilo_weW==2'b11))?2'b10:
                             2'b00;
     
-    assign branchstall = ((branchD | jrD | balD )&& regwriteE && (writeregE == rsD || writeregE == rtD)) || (branchD && memtoregM && (writeregM == rsD || writeregM == rtD));
+    //assign branchstall = ((branchD | jrD | balD )&& regwriteE && (writeregE == rsD || writeregE == rtD)) || (branchD && memtoregM && (writeregM == rsD || writeregM == rtD));
     //div stall
     assign div_start = ((alucontrolE == `DIV_CONTROL) & (div_ready == `DivResultNotReady))  ? 1'b1 : 
                        ((alucontrolE == `DIVU_CONTROL) & (div_ready == `DivResultNotReady)) ? 1'b1 :
@@ -66,7 +73,7 @@ module hazard(
                        ((alucontrolE == `DIVU_CONTROL) & (div_ready == `DivResultReady))    ? 1'b0 :  
                        1'b0;            
 
-    assign stallF = (lwstall | branchstall | div_start);
+    assign stallF = (lwstall | div_start);
     assign stallD = stallF;
     //assign flushD = stallF;
     assign stallE = div_start;
